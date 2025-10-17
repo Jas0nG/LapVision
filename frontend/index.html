@@ -1,0 +1,2754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏎️ LapVision </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f0f;
+            color: #e5e5e5;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0f0f0f;
+        }
+
+        /* 专业剪辑软件顶部工具栏 */
+        .top-toolbar {
+            background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
+            border-bottom: 1px solid #333;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .app-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 预览区域 */
+        .preview-section {
+            flex: 1;
+            display: flex;
+            background: #272727;
+            border-bottom: 1px solid #333;
+            min-height: 400px;
+        }
+
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            height: 100%; /* 确保填满父元素高度 */
+        }
+
+        /* 时间轴区域 */
+        .timeline-section {
+            background: #202020;
+            border-top: 1px solid #333;
+            padding: 20px;
+            min-height: 200px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            width: 500px;
+            background: #202020;
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #9ca3af;
+        }
+
+        /* 专业时间轴样式 */
+        .timeline-container {
+            background: #222222;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 1px solid #333;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1px;
+        }
+
+        .timeline-title {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #ccc;
+        }
+
+        .timeline-right-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .timeline-info {
+            font-size: 0.8em;
+            color: #888;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .timeline-shortcuts {
+            display: flex;
+            gap: 12px;
+            opacity: 0.6;
+        }
+
+        .timeline-shortcuts .shortcut {
+            font-size: 0.7em;
+            color: #666;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 60px;
+            background: #0a0a0a;
+            border-radius: 4px;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+
+        .timeline-ruler {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+
+        .timeline-ruler-marks {
+            position: relative;
+            height: 100%;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #444 0px,
+                #444 1px,
+                transparent 1px,
+                transparent 50px
+            );
+        }
+
+        .timeline-playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff4444;
+            box-shadow: 0 0 6px rgba(255, 68, 68, 0.6);
+            z-index: 10;
+            transition: left 0.1s ease;
+        }
+
+        .timeline-playhead::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -6px;
+            width: 14px;
+            height: 14px;
+            background: #ff4444;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 68, 68, 0.8);
+        }
+
+        .timeline-waveform {
+            position: absolute;
+            top: 21px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(59, 130, 246, 0.1) 0%,
+                rgba(59, 130, 246, 0.3) 50%,
+                rgba(59, 130, 246, 0.1) 100%
+            );
+            background-size: 4px 100%;
+        }
+
+        /* 面板样式 */
+        .panel {
+            background: linear-gradient(180deg, #1f1f1f 0%, #1a1a1a 100%);
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #333;
+            background: #222;
+            border-radius: 7px 7px 0 0;
+        }
+
+        .panel-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+
+        .panel-content {
+            padding: 16px;
+        }
+
+        /* 网格布局 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-full {
+            grid-column: 1 / -1;
+        }
+
+        /* 专业表单控件 */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: #ccc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e5e5e5;
+            font-size: 0.9em;
+            font-family: 'Monaco', 'Menlo', monospace;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+            background: #111;
+        }
+
+        /* 专业按钮 */
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            font-size: 1.2em;
+            padding: 12px 24px;
+            display: block;
+            text-align: center;
+            margin: 0 auto;
+            border-color: #1e3a8a;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: #222;
+            color: #ccc;
+            border-color: #444;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+            border-color: #555;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+        }
+
+        /* 专业视频预览 */
+        .video-preview {
+            position: relative;
+            max-width: 800px;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+
+        .video-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .video-preview:hover .video-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .playback-controls button {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .playback-controls button:hover {
+            background: rgba(255, 107, 53, 0.9);
+            border-color: #ff6b35;
+            transform: scale(1.1);
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            padding: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .video-timestamp {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .keyboard-hints {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .keyboard-hints .hint {
+            font-size: 0.7em;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            text-shadow: none;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            background: #272727;
+            border: 5px dashed #333;
+            border-radius: 8px;
+            color: #666;
+            font-size: 1.1em;
+            aspect-ratio: 16 / 9;
+        }
+
+        /* 滑块 */
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #3f4857;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        /* 画廊 */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .gallery-item {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .gallery-item.selected {
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .gallery-item .label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: #e0e0e0;
+            padding: 4px 8px;
+            font-size: 0.75em;
+            text-align: center;
+        }
+
+        /* 统计信息 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #1e1e2e;
+            border: 1px solid #3f4857;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        /* 浮动通知提示 */
+        .toast-container {
+            position: fixed;
+            top: 60px;
+            left: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateX(-100%) scale(0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: currentColor;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+
+        .toast.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #a7f3d0;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .toast.success::before {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .toast.error::before {
+            background: #ef4444;
+        }
+
+        .toast.info {
+            background: rgba(6, 182, 212, 0.15);
+            color: #a5f3fc;
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .toast.info::before {
+            background: #06b6d4;
+        }
+
+        .toast-icon {
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 1.1em;
+        }
+
+        .toast-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: currentColor;
+            opacity: 0.6;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: opacity 0.2s ease;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideInToast {
+            from {
+                opacity: 0;
+                transform: translateX(100%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideOutToast {
+            from {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%) scale(0.9);
+            }
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 阶段指示 */
+        .phase-indicator {
+            display: flex;
+            gap: 8px;
+        }
+
+        .phase {
+            padding: 4px 12px;
+            background: #333;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #999;
+            font-size: 0.75em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        .phase.active {
+            background: #ff6b35;
+            border-color: #ff6b35;
+            color: white;
+        }
+
+        .phase.completed {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #3b82f6;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #1e1e2e;
+            color: #e0e0e0;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #3b82f6;
+            font-size: 0.9em;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 第二步现代化设计 */
+        #phase2-card {
+            text-align: center;
+        }
+
+        #phase2-card .control-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        #phase2-card .control-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 140px;
+        }
+
+        #phase2-card .control-item label {
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            color: #d0d0d0;
+            font-weight: 500;
+        }
+
+        #phase2-card .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e1e2e;
+            border: 1px solid #3f4857;
+            border-radius: 8px;
+            padding: 4px;
+            width: 140px;
+        }
+
+        #phase2-card .compact-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 12px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+            min-width: 0;
+        }
+
+        #phase2-card .compact-input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        #phase2-card .input-group:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        #phase2-card .compact-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        #phase2-card .compact-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        /* 现代化滑块设计 */
+        #phase2-card .modern-slider-container {
+            margin: 32px 0;
+            padding: 0 8px;
+        }
+
+        #phase2-card .slider-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            color: #3b82f6;
+        }
+
+        #phase2-card .slider-wrapper {
+            position: relative;
+            background: #2d3748;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #3f4857;
+        }
+
+        #phase2-card .modern-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #3f4857 0%, #3f4857 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 12px 0;
+        }
+
+        #phase2-card .modern-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            cursor: pointer;
+            border: 3px solid #1e1e2e;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        #phase2-card .modern-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        #phase2-card .modern-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            cursor: pointer;
+            border: 3px solid #1e1e2e;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        #phase2-card .slider-track {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            right: 20px;
+            height: 8px;
+            background: #3f4857;
+            border-radius: 4px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        #phase2-card .slider-progress {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            height: 8px;
+            background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+            border-radius: 4px;
+            transform: translateY(-50%);
+            width: 0%;
+            transition: width 0.1s ease;
+            pointer-events: none;
+        }
+
+        #phase2-card .frame-info {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #1e1e2e;
+            border: 1px solid #3f4857;
+            border-radius: 8px;
+            color: #9ca3af;
+            font-size: 0.9em;
+            font-family: 'Monaco', 'Menlo', monospace;
+            text-align: center;
+        }
+
+        #phase2-card .button-group {
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        /* 隐藏元素 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 进度指示 */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #3f4857;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 操作指南样式 */
+        .guide-box {
+            background: linear-gradient(135deg, #ffffff 0%, #101f4e 100%);
+            border: 1px solid #ececec;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .guide-box::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ffffff, #06b6d4, #3b82f6);
+            border-radius: 8px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .guide-box .guide-icon {
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+        }
+
+        .guide-content h5 {
+            color: #fff;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .guide-content p {
+            color: #e2e8f0;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .guide-steps {
+            margin-top: 12px;
+        }
+
+        .guide-steps .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .guide-steps .step:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .guide-steps .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #ff6b35;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .guide-steps .step span:not(.step-number) {
+            color: #f1f5f9;
+            font-size: 0.85em;
+        }
+
+        .guide-tips {
+            margin-top: 12px;
+        }
+
+        .guide-tips .tip {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 6px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            color: #cbd5e1;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+
+        .guide-tips .tip::before {
+            content: attr(data-emoji);
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 为不同阶段使用不同的主色调 */
+        .phase-1-guide .guide-box {
+            background: linear-gradient(135deg, #024731 0%, #084f37 100%);
+            border-color: #024731;
+        }
+
+        .phase-1-guide .guide-box::before {
+            background: linear-gradient(45deg, #064e3b, #065f46, #064e3b);
+        }
+
+        .phase-2-guide .guide-box {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            border-color: #2563eb;
+        }
+
+        .phase-2-guide .guide-box::before {
+            background: linear-gradient(45deg, #2563eb, #3b82f6, #2563eb);
+        }
+
+        .phase-3-guide .guide-box {
+            background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 100%);
+            border-color: #6d28d9;
+        }
+
+        .phase-3-guide .guide-box::before {
+            background: linear-gradient(45deg, #6d28d9, #8b5cf6, #6d28d9);
+        }
+
+        /* 阶段3紧凑布局样式 */
+        .phase3-main-layout {
+            display: flex;
+            gap: 16px;
+            height: 100%;
+            width: 100%;
+            align-items: flex-start; /* 改为顶部对齐，避免拉伸 */
+            position: absolute; /* 使用绝对定位确保固定高度 */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .phase3-preview-area {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%; /* 固定高度 */
+            overflow-y: auto; /* 允许内容滚动 */
+        }
+
+        .phase3-stats-area {
+            flex: 0 0 280px; /* 固定宽度，不伸缩 */
+            min-width: 240px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%; /* 固定填满容器高度 */
+            position: relative; /* 确保子元素正确定位 */
+        }
+
+        /* 紧凑双画面预览 */
+        .compact-dual-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            height: 350px; /* 进一步增大高度 */
+        }
+
+        .compact-preview-half {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compact-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #222;
+            border-bottom: 1px solid #333;
+        }
+
+        .preview-label {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .preview-time {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.7em;
+            color: #ff6b35;
+            font-weight: 500;
+        }
+
+        .compact-video-preview {
+            position: relative;
+            background: #000;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compact-video-preview img {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            object-fit: contain;
+            display: block;
+        }
+
+        .compact-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .compact-video-preview:hover .compact-video-overlay {
+            opacity: 1;
+        }
+
+        .compact-playback-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compact-play-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .compact-play-btn:hover {
+            background: rgba(255, 107, 53, 0.9);
+            border-color: #ff6b35;
+            transform: scale(1.1);
+        }
+
+        /* 候选帧显示 */
+        .candidates-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 0;
+        }
+
+        .candidates-header h4 {
+            margin: 0;
+            font-size: 0.8em;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .candidates-hint {
+            font-size: 0.7em;
+            color: #999;
+        }
+
+        .compact-candidates-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 180px; /* 减小最大高度 */
+            overflow-y: auto;
+        }
+
+        .compact-candidates-gallery .gallery-item {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .compact-candidates-gallery .gallery-item:hover {
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
+
+        .compact-candidates-gallery .gallery-item.selected {
+            border-color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .compact-candidates-gallery .gallery-item img {
+            width: 100%;
+            height: 100px; /* 减小图片高度 */
+            object-fit: cover;
+        }
+
+        .compact-candidates-gallery .gallery-item .label {
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #e0e0e0;
+            font-size: 0.65em;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* 紧凑统计面板 */
+        .compact-stats-panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* 确保填满容器高度 */
+            min-height: 0; /* 允许内容收缩 */
+        }
+
+        .compact-stats-header {
+            padding: 10px 12px;
+            background: #222;
+            border-bottom: 1px solid #333;
+        }
+
+        .compact-stats-header h4 {
+            margin: 0;
+            font-size: 0.8em;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .compact-stats-content {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stats-placeholder {
+            color: #666;
+            text-align: center;
+            font-size: 0.8em;
+            padding: 20px 0;
+        }
+
+        /* 简化的统计显示 */
+        .compact-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .compact-stat-box {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .compact-stat-label {
+            font-size: 0.65em;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .compact-stat-value {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #3b82f6;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .compact-laps-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .compact-lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-bottom: 1px solid #333;
+            font-size: 0.75em;
+        }
+
+        .compact-lap-item:last-child {
+            border-bottom: none;
+        }
+
+        .compact-lap-item.latest-lap {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .phase3-main-layout {
+                flex-direction: column;
+                position: relative; /* 在小屏幕上使用相对定位 */
+                height: auto;
+            }
+            
+            .phase3-stats-area {
+                flex: 0 0 auto; /* 在垂直布局时使用自动高度 */
+                max-width: none;
+                min-width: 0;
+                height: auto;
+                min-height: 300px; /* 设置最小高度确保可用性 */
+            }
+            
+            .phase3-preview-area {
+                height: auto; /* 在垂直布局时使用自动高度 */
+                overflow-y: visible;
+            }
+            
+            .compact-dual-preview {
+                height: 250px;
+            }
+            
+            .timeline-shortcuts {
+                gap: 8px;
+            }
+            
+            .timeline-shortcuts .shortcut {
+                font-size: 0.65em;
+                padding: 1px 4px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .compact-dual-preview {
+                grid-template-columns: 1fr;
+                height: 400px;
+            }
+            
+            .compact-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline-shortcuts {
+                display: none; /* 在小屏幕上隐藏快捷键提示 */
+            }
+            
+            .timeline-right-info {
+                align-items: center;
+            }
+            
+            .phase3-stats-area {
+                min-width: unset;
+                max-width: unset;
+            }
+
+            /* 移动设备上的toast样式 */
+            .toast-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .toast {
+                min-width: auto;
+                width: 100%;
+                margin-bottom: 8px;
+                font-size: 0.9em;
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部工具栏 -->
+        <div class="top-toolbar">
+            <div class="app-title" style="margin-right: 40px;">
+                🏎️ LapVision
+                <span style="font-size: 0.8em; color: #9ca3af; margin-left: 20px;">Analysis race chrono from onboard video</span>
+            </div>
+            <div class="toolbar-actions">
+                <div class="phase-indicator">
+                    <div class="phase active" id="phase-1">初始化</div>
+                    <div class="phase" id="phase-2">设置参考帧</div>
+                    <div class="phase" id="phase-3">搜索圈速</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 浮动通知容器 -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+
+            <!-- 预览区域 -->
+            <div class="preview-section">
+                <div class="preview-panel">
+                    <div id="phase1-content">
+                        <div class="preview-placeholder">
+                            <div style="text-align: center;">
+                                <h3>选择视频文件开始</h3>
+                                <p>加载视频后将在此处显示预览</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="phase2-content" class="hidden">
+                        <div class="video-preview">
+                            <img id="frame-preview" src="" alt="视频预览" style="display: none;">
+                            <div class="video-overlay" id="video-overlay">
+                                <div class="playback-controls">
+                                    <button class="btn-icon" id="play-pause-btn" onclick="togglePlayback()" title="播放/暂停 (空格)">
+                                        <span id="play-icon">▶️</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="video-controls">
+                                <div class="video-timestamp" id="video-timestamp">00:00:00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="phase3-content" class="hidden" style="position: relative; height: 100%; width: 100%;">
+                        <!-- 主要内容区域 - 水平分布 -->
+                        <div class="phase3-main-layout" style="padding: 20px;">
+                            <!-- 左侧：双画面预览 -->
+                            <div class="phase3-preview-area">
+                                <div class="compact-dual-preview">
+                                    <!-- 参考帧 -->
+                                    <div class="compact-preview-half">
+                                        <div class="compact-preview-header">
+                                            <span class="preview-label">🏁 参考帧</span>
+                                            <span class="preview-time" id="ref-frame-timestamp">--:--:--</span>
+                                        </div>
+                                        <div class="compact-video-preview">
+                                            <img id="ref-frame-display" src="" alt="参考帧">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 当前帧 -->
+                                    <div class="compact-preview-half">
+                                        <div class="compact-preview-header">
+                                            <span class="preview-label">🎯 当前帧</span>
+                                            <span class="preview-time" id="current-video-timestamp">00:00:00</span>
+                                        </div>
+                                        <div class="compact-video-preview">
+                                            <img id="current-frame-display" src="" alt="当前帧" style="display: none;">
+                                            <div class="compact-video-overlay" id="current-video-overlay">
+                                                <div class="compact-playback-controls">
+                                                    <button class="compact-play-btn" id="current-play-pause-btn" onclick="togglePlayback()" title="播放/暂停 (空格)">
+                                                        <span id="current-play-icon">▶️</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 候选帧区域 - 移到预览下方 -->
+                                <div id="candidates-display" class="hidden">
+                                    <div class="candidates-header">
+                                        <h4>🔍 候选终点帧</h4>
+                                        <span class="candidates-hint">点击选择最接近的终点</span>
+                                    </div>
+                                    <div class="compact-candidates-gallery" id="candidates-gallery"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右侧：紧凑统计面板 -->
+                            <div class="phase3-stats-area">
+                                <div class="compact-stats-panel" id="stats-display">
+                                    <div class="compact-stats-header">
+                                        <h4>📊 圈速记录</h4>
+                                    </div>
+                                    <div class="compact-stats-content" id="stats-container">
+                                        <div class="stats-placeholder">等待搜索...</div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 控制面板 -->
+                <div class="control-panel" id="control-panel"></div>
+            </div>
+
+            <!-- 时间轴区域 -->
+            <div class="timeline-section">
+                <div class="timeline-container">
+                    <div class="timeline-header">
+                        <div class="timeline-title">时间轴</div>
+                        <div class="timeline-right-info">
+                            <div class="timeline-shortcuts" id="timeline-shortcuts">
+                                <span class="shortcut">空格: 播放/暂停</span>
+                                <span class="shortcut">← →: 逐帧</span>
+                                <span class="shortcut">Shift+← →: ±5帧</span>
+                            </div>
+                            <div class="timeline-info" id="timeline-info">00:00:00 / 00:00:00</div>
+                        </div>
+                    </div>
+                    <div class="timeline-track" onclick="seekToPosition(event)">
+                        <div class="timeline-ruler">
+                            <div class="timeline-ruler-marks"></div>
+                        </div>
+                        <div class="timeline-waveform"></div>
+                        <div class="timeline-playhead" id="playhead" style="left: 0%;"></div>
+                    </div>
+                </div>
+
+
+
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let appState = {
+            counterId: null,
+            selectedCandidate: null,
+            videoInfo: null,
+            sliderDebounceTimer: null,
+            currentFrame: 0,
+            isPlaying: false,
+            playbackTimer: null,
+            confirmedLaps: 0
+        };
+
+        // 更新控制面板内容
+        function updateControlPanel(phase) {
+            const panel = document.getElementById('control-panel');
+            
+            // 清除之前的阶段样式类
+            panel.classList.remove('phase-1-guide', 'phase-2-guide', 'phase-3-guide');
+            // 添加当前阶段的样式类
+            panel.classList.add(`phase-${phase}-guide`);
+            
+            switch(phase) {
+                case 1:
+                    panel.innerHTML = `
+                                <div class="guide-box">
+                                    <div class="guide-icon">🏁</div>
+                                    <div class="guide-content">
+                                        <h5>Welcome to <strong>LapVision</strong> (Karting Version) </h5>
+                                        <p><strong>LapVision</strong> 是一个基于视觉的赛车计时工具，能够自动分析您的赛道车载视频并辅助分析您的圈速信息。</p>
+                                        <div class="guide-steps">
+                                            <div class="step">
+                                                <span class="step-number">1</span>
+                                                <span>加载过程中未经剪辑的车载视频</span>
+                                            </div>
+                                            <div class="step">
+                                                <span class="step-number">2</span>
+                                                <span>选择第一次经过终点/起点线的参考帧</span>
+                                            </div>
+                                            <div class="step">
+                                                <span class="step-number">3</span>
+                                                <span>自动分析并生成圈速统计信息</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h4 class="panel-title">项目设置</h4>
+                            </div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label>视频文件</label>
+                                    <select id="video-select">
+                                        <option value="">选择视频...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>最小圈速(秒)</label>
+                                    <input type="number" id="min-lap-time" value="18" min="1" step="0.1">
+                                </div>
+                                <div class="button-group">
+                                    <button class="btn-primary" id="btn-init" onclick="initCounter()">
+                                        加载视频
+                                    </button>
+                                </div>
+                                <div id="video-info" class="hidden" style="margin-top: 16px; padding: 12px; background: #0a0a0a; border-radius: 4px; font-size: 0.8em;">
+                                    <div><strong>FPS:</strong> <span id="info-fps"></span></div>
+                                    <div><strong>总帧数:</strong> <span id="info-frames"></span></div>
+                                    <div><strong>时长:</strong> <span id="info-duration"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 2:
+                    panel.innerHTML = `
+                        <div class="guide-box">
+                            <div class="guide-content">
+                                <h5>设置计时起点</h5>
+                                <p>请将时间轴定位到您<strong>第一次经过起点/终点线</strong>的画面作为参考帧。这将作为后续圈速计算的基准点。</p>
+                                <div class="guide-tips">
+                                    <div class="tip">💡 使用播放控制或拖动时间轴定位到合适位置</div>
+                                    <div class="tip">🎮 支持键盘快捷键：空格播放/暂停，←→逐帧浏览</div>
+                                    <div class="tip">⚡ Shift+←/→可快速跳转5帧</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h4 class="panel-title">帧控制</h4>
+                            </div>
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label>帧号</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="number" id="frame-number" value="0" min="0" style="flex: 1;">
+                                        <button class="btn-secondary btn-small" onclick="jumpToFrame()">跳转</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>时间(秒)</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="number" id="frame-time" value="0" step="0.1" min="0" style="flex: 1;">
+                                        <button class="btn-secondary btn-small" onclick="jumpToTime()">跳转</button>
+                                    </div>
+                                </div>
+                                <div class="button-group" style="margin-top: 16px;">
+                                    <button class="btn-primary" id="btn-set-ref" onclick="setReferenceFrame()">
+                                        设为参考帧
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 3:
+                    panel.innerHTML = `
+                        <div class="guide-box">
+                            <div class="guide-content">
+                                <h5>开始圈速计算</h5>
+                                <p>系统将使用AI视觉识别技术，自动查找与参考帧相似的画面，精确计算每一圈的用时。</p>
+                                <div class="guide-tips">
+                                    <div class="tip">🎯 点击"搜索下一圈"开始自动分析</div>
+                                    <div class="tip">🖱️ 从候选结果中选择最接近的终点帧</div>
+                                    <div class="tip">🎮 使用时间轴和键盘快捷键进行精确调整</div>
+                                    <div class="tip">✅ 确认后继续搜索更多圈速</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h4 class="panel-title">圈速搜索</h4>
+                            </div>
+                            <div class="panel-content">
+                                <div class="button-group">
+                                    <button class="btn-primary" id="btn-search" onclick="searchLap()">
+                                        🔍 开始分析
+                                    </button>
+                                </div>
+                                <div class="button-group" style="margin-top: 12px;">
+                                    <button class="btn-secondary" id="btn-save" onclick="saveResults()">
+                                        💾 保存结果
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            // 重新加载视频列表（如果在阶段1）
+            if (phase === 1) {
+                // 延迟一小段时间确保DOM元素已创建
+                setTimeout(() => {
+                    loadVideos();
+                }, 50);
+            }
+        }
+
+        // 更新时间轴位置
+        function updateTimelinePosition() {
+            if (!appState.videoInfo) return;
+            
+            const percentage = (appState.currentFrame / appState.videoInfo.total_frames) * 100;
+            const playhead = document.getElementById('playhead');
+            if (playhead) {
+                playhead.style.left = percentage + '%';
+            }
+            
+            const currentTime = appState.currentFrame / appState.videoInfo.fps;
+            const totalTime = appState.videoInfo.duration;
+            const timeInfo = document.getElementById('timeline-info');
+            if (timeInfo) {
+                timeInfo.textContent = formatTime(currentTime) + ' / ' + formatTime(totalTime);
+            }
+        }
+
+        // 点击时间轴跳转
+        function seekToPosition(event) {
+            if (!appState.videoInfo) return;
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const percentage = x / rect.width;
+            const targetFrame = Math.floor(percentage * appState.videoInfo.total_frames);
+            
+            getFrame(targetFrame);
+        }
+
+        // 播放控制功能
+        function togglePlayback() {
+            if (!appState.videoInfo || !appState.counterId) return;
+            
+            if (appState.isPlaying) {
+                pausePlayback();
+            } else {
+                startPlayback();
+            }
+        }
+
+        function startPlayback() {
+            if (appState.isPlaying) return;
+            
+            appState.isPlaying = true;
+            updatePlaybackButton();
+            
+            // 以视频的实际FPS播放（限制最高30fps以保证流畅性）
+            const playbackFPS = Math.min(appState.videoInfo.fps, 30);
+            const frameInterval = 1000 / playbackFPS;
+            
+            appState.playbackTimer = setInterval(() => {
+                if (appState.currentFrame >= appState.videoInfo.total_frames - 1) {
+                    pausePlayback(); // 播放到结尾自动暂停
+                    return;
+                }
+                
+                const nextFrame = appState.currentFrame + 1;
+                getFrame(nextFrame);
+            }, frameInterval);
+        }
+
+        function pausePlayback() {
+            if (!appState.isPlaying) return;
+            
+            appState.isPlaying = false;
+            updatePlaybackButton();
+            
+            if (appState.playbackTimer) {
+                clearInterval(appState.playbackTimer);
+                appState.playbackTimer = null;
+            }
+        }
+
+        function updatePlaybackButton() {
+            // 更新阶段2的播放按钮图标
+            const playIcon = document.getElementById('play-icon');
+            if (playIcon) {
+                playIcon.textContent = appState.isPlaying ? '⏸️' : '▶️';
+            }
+            
+            // 更新阶段3右侧预览的播放按钮图标
+            const currentPlayIcon = document.getElementById('current-play-icon');
+            if (currentPlayIcon) {
+                currentPlayIcon.textContent = appState.isPlaying ? '⏸️' : '▶️';
+            }
+            
+            // 更新按钮标题
+            const playButton = document.getElementById('play-pause-btn');
+            if (playButton) {
+                playButton.title = appState.isPlaying ? '暂停 (空格)' : '播放 (空格)';
+            }
+            
+            const currentPlayButton = document.getElementById('current-play-pause-btn');
+            if (currentPlayButton) {
+                currentPlayButton.title = appState.isPlaying ? '暂停 (空格)' : '播放 (空格)';
+            }
+            
+            // 在时间轴区域显示播放状态
+            const timelineTitle = document.querySelector('.timeline-title');
+            if (timelineTitle) {
+                timelineTitle.textContent = appState.isPlaying ? 'VIDEO TIMELINE (播放中)' : 'VIDEO TIMELINE';
+            }
+        }
+
+        // 帧导航功能
+        function goToNextFrame(step = 1) {
+            if (!appState.videoInfo) return;
+            
+            const targetFrame = Math.min(
+                appState.currentFrame + step, 
+                appState.videoInfo.total_frames - 1
+            );
+            
+            if (targetFrame !== appState.currentFrame) {
+                getFrame(targetFrame);
+            }
+        }
+
+        function goToPreviousFrame(step = 1) {
+            if (!appState.videoInfo) return;
+            
+            const targetFrame = Math.max(appState.currentFrame - step, 0);
+            
+            if (targetFrame !== appState.currentFrame) {
+                getFrame(targetFrame);
+            }
+        }
+
+        // ============ 初始化 ============
+
+        async function loadVideos() {
+            try {
+                const response = await fetch('/api/videos');
+                const result = await response.json();
+                
+                const select = document.getElementById('video-select');
+                if (!select) {
+                    console.warn('Video select element not found');
+                    return;
+                }
+                
+                // 清空现有选项
+                select.innerHTML = '<option value="">选择视频...</option>';
+                
+                result.data.videos.forEach(video => {
+                    const option = document.createElement('option');
+                    option.value = video.path;
+                    option.textContent = video.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showMessage(`加载视频列表失败: ${error}`, 'error');
+            }
+        }
+
+        async function initCounter() {
+            try {
+                const videoSelect = document.getElementById('video-select');
+                const minLapTimeInput = document.getElementById('min-lap-time');
+                
+                if (!videoSelect || !minLapTimeInput) {
+                    showMessage('界面未正确初始化', 'error');
+                    return;
+                }
+                
+                const videoPath = videoSelect.value;
+                const minLapTime = parseFloat(minLapTimeInput.value);
+
+                if (!videoPath) {
+                    showMessage('请选择视频文件', 'error');
+                    return;
+                }
+
+                setButtonLoading('btn-init', true);
+
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video_path: videoPath, min_lap_time: minLapTime })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    appState.counterId = result.data.counter_id;
+                    appState.videoInfo = result.data.video_info;
+
+                    // 更新视频信息显示
+                    setTimeout(() => {
+                        const fpsElem = document.getElementById('info-fps');
+                        const framesElem = document.getElementById('info-frames');
+                        const durationElem = document.getElementById('info-duration');
+                        const videoInfoElem = document.getElementById('video-info');
+                        
+                        if (fpsElem) fpsElem.textContent = result.data.video_info.fps.toFixed(2);
+                        if (framesElem) framesElem.textContent = result.data.video_info.total_frames;
+                        if (durationElem) durationElem.textContent = result.data.video_info.formatted_duration;
+                        if (videoInfoElem) videoInfoElem.classList.remove('hidden');
+                    }, 100);
+
+                    // 进入阶段2
+                    transitionToPhase(2);
+                    await loadFirstFrame();
+
+                    showMessage('视频加载成功！', 'success');
+                } else {
+                    showMessage(`初始化失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`错误: ${error}`, 'error');
+            } finally {
+                setButtonLoading('btn-init', false);
+            }
+        }
+
+        // ============ 帧管理 ============
+
+        async function loadFirstFrame() {
+            await getFrame(0);
+        }
+
+        async function getFrame(frameIdx) {
+            try {
+                const response = await fetch(`/api/frame/${appState.counterId}/${frameIdx}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // 更新阶段2的预览图像
+                    const img = document.getElementById('frame-preview');
+                    if (img) {
+                        img.src = `data:image/png;base64,${result.data.image_base64}`;
+                        img.style.display = 'block';
+                    }
+
+                    // 更新阶段3的右侧当前帧显示
+                    const currentImg = document.getElementById('current-frame-display');
+                    if (currentImg) {
+                        currentImg.src = `data:image/png;base64,${result.data.image_base64}`;
+                        currentImg.style.display = 'block';
+                    }
+
+                    // 更新当前帧状态
+                    appState.currentFrame = frameIdx;
+                    
+                    // 更新控制输入框
+                    const frameNumberInput = document.getElementById('frame-number');
+                    const frameTimeInput = document.getElementById('frame-time');
+                    const timestampDisplay = document.getElementById('video-timestamp');
+                    const currentTimestampDisplay = document.getElementById('current-video-timestamp');
+                    
+                    if (frameNumberInput && !appState.isPlaying) frameNumberInput.value = frameIdx;
+                    if (frameTimeInput && !appState.isPlaying) frameTimeInput.value = result.data.time_sec.toFixed(2);
+                    if (timestampDisplay) timestampDisplay.textContent = result.data.formatted_time;
+                    if (currentTimestampDisplay) currentTimestampDisplay.textContent = result.data.formatted_time;
+                    
+                    // 更新时间轴
+                    updateTimelinePosition();
+                }
+            } catch (error) {
+                showMessage(`加载帧失败: ${error}`, 'error');
+                // 如果加载失败，暂停播放
+                if (appState.isPlaying) {
+                    pausePlayback();
+                }
+            }
+        }
+
+
+
+        // 添加格式化时间的辅助函数
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const millis = Math.floor((seconds - Math.floor(seconds)) * 1000);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+        }
+
+        function jumpToFrame() {
+            const frameNumberInput = document.getElementById('frame-number');
+            if (!frameNumberInput || !appState.videoInfo) {
+                showMessage('系统未就绪', 'error');
+                return;
+            }
+            
+            const frameIdx = parseInt(frameNumberInput.value);
+            if (frameIdx < 0 || frameIdx >= appState.videoInfo.total_frames) {
+                showMessage('帧号无效', 'error');
+                return;
+            }
+            getFrame(frameIdx);
+        }
+
+        function jumpToTime() {
+            const frameTimeInput = document.getElementById('frame-time');
+            if (!frameTimeInput || !appState.videoInfo) {
+                showMessage('系统未就绪', 'error');
+                return;
+            }
+            
+            const timeSec = parseFloat(frameTimeInput.value);
+            const frameIdx = Math.floor(timeSec * appState.videoInfo.fps);
+            getFrame(frameIdx);
+        }
+
+        // ============ 参考帧 ============
+
+        async function setReferenceFrame() {
+            // 暂停播放
+            if (appState.isPlaying) {
+                pausePlayback();
+            }
+            try {
+                const frameNumberInput = document.getElementById('frame-number');
+                if (!frameNumberInput || !appState.videoInfo) {
+                    showMessage('系统未就绪', 'error');
+                    return;
+                }
+                
+                const frameIdx = parseInt(frameNumberInput.value);
+                setButtonLoading('btn-set-ref', true);
+
+                const response = await fetch(`/api/set-ref-frame/${appState.counterId}/${frameIdx}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const img = document.getElementById('ref-frame-display');
+                    if (img) {
+                        img.src = `data:image/png;base64,${result.data.image_base64}`;
+                    }
+
+                    // 更新参考帧时间戳显示
+                    const refTimestamp = document.getElementById('ref-frame-timestamp');
+                    if (refTimestamp && result.data.formatted_time) {
+                        refTimestamp.textContent = `参考帧 - ${result.data.formatted_time}`;
+                    }
+
+                    showMessage('参考帧设置成功！', 'success');
+                    transitionToPhase(3);
+                    
+                    // 延迟更新指南提示，确保面板已切换
+                    setTimeout(() => {
+                        updateDynamicGuide('参考帧已设置', '现在可以开始搜索卡丁车的下一圈。系统将自动识别相似的冲线画面。');
+                    }, 300);
+                } else {
+                    showMessage(`设置失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`错误: ${error}`, 'error');
+            } finally {
+                setButtonLoading('btn-set-ref', false);
+            }
+        }
+
+        // ============ 搜索 ============
+
+        async function searchLap() {
+            try {
+                setButtonLoading('btn-search', true);
+
+                const response = await fetch(`/api/search-lap/${appState.counterId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ search_range: 10 })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    displayCandidates(result.data.candidates);
+                    showMessage('搜索完成！请点击最接近的候选帧', 'success');
+                } else {
+                    // 检查是否是视频结束的错误
+                    if (result.message && (result.message.includes('视频末尾') || result.message.includes('视频已结束') || result.message.includes('剩余时长不足'))) {
+                        showMessage('🏁 视频分析完成！已到达视频末尾，无法继续搜索更多圈速。', 'info');
+                        updateDynamicGuide('分析完成', '视频已分析完毕。您可以保存当前结果或重新开始分析。');
+                    } else {
+                        showMessage(`搜索失败: ${result.message}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showMessage(`错误: ${error}`, 'error');
+            } finally {
+                setButtonLoading('btn-search', false);
+            }
+        }
+
+        function displayCandidates(candidates) {
+            const gallery = document.getElementById('candidates-gallery');
+            const candidatesDisplay = document.getElementById('candidates-display');
+            
+            // 显示候选帧区域
+            if (candidatesDisplay) {
+                candidatesDisplay.classList.remove('hidden');
+            }
+            
+            gallery.innerHTML = '';
+
+            candidates.forEach((candidate, idx) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.onclick = () => selectCandidate(candidate, item);
+                
+                item.innerHTML = `
+                    <img src="data:image/png;base64,${candidate.image_base64}" alt="候选帧">
+                    <div class="label">
+                        <div>${candidate.formatted_time}</div>
+                        <div>相似度: ${(candidate.similarity * 100).toFixed(1)}%</div>
+                    </div>
+                `;
+                
+                gallery.appendChild(item);
+            });
+            
+            // 更新指南提示 - 根据是否有已确认圈速判断提示内容
+            const isFirstLap = !appState.confirmedLaps || appState.confirmedLaps === 0;
+            
+            if (isFirstLap) {
+                updateDynamicGuide('候选帧已生成', '请点击最接近第一次冲线位置的候选帧，预览将自动跳转到该位置。');
+            } else {
+                const nextLapNumber = appState.confirmedLaps + 1;
+                updateDynamicGuide(`第${nextLapNumber}圈候选帧已生成`, '请点击最接近下一次冲线位置的候选帧，预览将自动跳转到该位置。');
+            }
+        }
+
+        function selectCandidate(candidate, element) {
+            // 清除之前的选择
+            document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('selected'));
+            
+            // 标记当前选择
+            element.classList.add('selected');
+            appState.selectedCandidate = candidate;
+
+            // 直接跳转到候选帧
+            getFrame(candidate.frame_idx);
+            
+            // 更新控制面板，显示确认按钮
+            updateControlPanelForConfirm();
+            
+            // 更新指南提示
+            updateDynamicGuide('已选择候选帧', `已跳转至第${candidate.frame_idx}帧（${candidate.formatted_time}）。请使用时间轴、键盘快捷键或帧控制进行精确调整，然后确认为本圈终点。`);
+        }
+
+
+
+        // ============ 确认 ============
+
+        async function confirmCurrentFrame() {
+            try {
+                // 使用当前预览中的帧作为确认帧
+                const frameIdx = appState.currentFrame;
+                
+                setButtonLoading('btn-confirm-lap', true);
+
+                const response = await fetch(`/api/confirm-lap/${appState.counterId}/${frameIdx}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    updateStatistics(result.data.statistics);
+                    showMessage(`圈速已确认: ${result.data.formatted_lap_time}`, 'success');
+                    
+                    // 更新已确认圈数
+                    appState.confirmedLaps = result.data.statistics.total_laps;
+                    
+                    // 重置搜索状态
+                    document.getElementById('candidates-gallery').innerHTML = '';
+                    const candidatesDisplay = document.getElementById('candidates-display');
+                    if (candidatesDisplay) {
+                        candidatesDisplay.classList.add('hidden');
+                    }
+                    appState.selectedCandidate = null;
+                    
+                    // 返回到搜索模式
+                    updateControlPanel(3);
+                    
+                    // 更新指南提示并自动开始下一圈搜索
+                    const lapNumber = result.data.statistics.total_laps;
+                    updateDynamicGuide('自动搜索中...', `第${lapNumber}圈已确认（${result.data.formatted_lap_time}）。正在自动搜索第${lapNumber + 1}圈...`);
+                    
+                    // 延迟一下让用户看到确认消息，然后自动搜索下一圈
+                    setTimeout(async () => {
+                        try {
+                            // 尝试搜索下一圈
+                            const searchResponse = await fetch(`/api/search-lap/${appState.counterId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ search_range: 10 })
+                            });
+                            
+                            const searchResult = await searchResponse.json();
+                            
+                            if (searchResult.status === 'success') {
+                                displayCandidates(searchResult.data.candidates);
+                                updateDynamicGuide('候选帧已生成', `第${lapNumber + 1}圈候选帧已生成，请选择最接近的终点帧。`);
+                            } else {
+                                // 检查是否是视频结束
+                                if (searchResult.message && (searchResult.message.includes('视频末尾') || searchResult.message.includes('视频已结束') || searchResult.message.includes('剩余时长不足'))) {
+                                    updateDynamicGuide('🏁 分析完成', `视频分析完毕！共完成${lapNumber}圈分析。可以保存结果或重新开始分析。`);
+                                    showMessage('🏁 视频分析完成！', 'info');
+                                } else {
+                                    updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
+                                }
+                            }
+                        } catch (error) {
+                            updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
+                        }
+                    }, 1000);
+                } else {
+                    showMessage(`确认失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`错误: ${error}`, 'error');
+            } finally {
+                setButtonLoading('btn-confirm-lap', false);
+            }
+        }
+
+        function cancelSelection() {
+            // 清除选择状态
+            document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('selected'));
+            appState.selectedCandidate = null;
+            
+            // 隐藏候选帧显示
+            const candidatesDisplay = document.getElementById('candidates-display');
+            if (candidatesDisplay) {
+                candidatesDisplay.classList.add('hidden');
+            }
+            
+            // 返回到搜索模式
+            updateControlPanel(3);
+            
+            // 更新指南提示
+            updateDynamicGuide('已取消选择', '请重新搜索圈速或从候选帧中选择合适的终点帧。');
+        }
+
+
+
+        function updateStatistics(stats) {
+            const container = document.getElementById('stats-container');
+            
+            if (stats.total_laps === 0) {
+                container.innerHTML = '<div class="stats-placeholder">暂无数据</div>';
+                return;
+            }
+
+            let html = `
+                <div class="compact-stats-grid">
+                    <div class="compact-stat-box">
+                        <div class="compact-stat-label">总圈数</div>
+                        <div class="compact-stat-value">${stats.total_laps}</div>
+                    </div>
+                    <div class="compact-stat-box">
+                        <div class="compact-stat-label">最快圈</div>
+                        <div class="compact-stat-value">${stats.best_lap}</div>
+                    </div>
+                    <div class="compact-stat-box">
+                        <div class="compact-stat-label">最慢圈</div>
+                        <div class="compact-stat-value">${stats.worst_lap}</div>
+                    </div>
+                    <div class="compact-stat-box">
+                        <div class="compact-stat-label">平均圈</div>
+                        <div class="compact-stat-value">${stats.average_lap}</div>
+                    </div>
+                </div>
+                <div class="compact-laps-list">
+            `;
+
+            stats.laps.forEach(lap => {
+                const isLatest = lap.lap_number === stats.total_laps;
+                html += `
+                    <div class="compact-lap-item ${isLatest ? 'latest-lap' : ''}">
+                        <span>第 ${lap.lap_number} 圈</span>
+                        <span style="color: ${isLatest ? '#10b981' : '#3b82f6'}; font-weight: 600;">${lap.formatted_time}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ============ 保存 ============
+
+        async function saveResults() {
+            try {
+                setButtonLoading('btn-save', true);
+
+                const response = await fetch(`/api/save-results/${appState.counterId}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showMessage('✅ 结果已保存！', 'success');
+                } else {
+                    showMessage(`保存失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`错误: ${error}`, 'error');
+            } finally {
+                setButtonLoading('btn-save', false);
+            }
+        }
+
+        // ============ 工具函数 ============
+
+        // 动态更新指南提示
+        function updateDynamicGuide(title, message) {
+            const guideContent = document.querySelector('.guide-content');
+            if (!guideContent) return;
+            
+            const h5 = guideContent.querySelector('h5');
+            const p = guideContent.querySelector('p');
+            
+            if (h5 && p) {
+                // 添加动画效果
+                guideContent.style.opacity = '0.5';
+                guideContent.style.transform = 'scale(0.98)';
+                
+                setTimeout(() => {
+                    h5.textContent = title;
+                    p.textContent = message;
+                    guideContent.style.opacity = '1';
+                    guideContent.style.transform = 'scale(1)';
+                    guideContent.style.transition = 'all 0.3s ease';
+                }, 150);
+            }
+        }
+
+        // 更新控制面板以显示确认选项
+        function updateControlPanelForConfirm() {
+            const panel = document.getElementById('control-panel');
+            
+            // 保持当前阶段样式
+            const currentPhase = panel.classList.contains('phase-1-guide') ? 1 : 
+                               panel.classList.contains('phase-2-guide') ? 2 : 3;
+            
+            panel.innerHTML = `
+                <div class="panel">
+                    <div class="panel-header">
+                        <h4 class="panel-title">🎯 确认终点帧</h4>
+                    </div>
+                    <div class="panel-content">
+                        <div class="guide-box">
+                            <div class="guide-content">
+                                <h5>已选择候选帧</h5>
+                                <p>当前预览已跳转至候选帧位置。请使用以下方式进行精确调整，然后确认为本圈终点。</p>
+                                <div class="guide-tips">
+                                    <div class="tip">🎮 键盘控制：←→逐帧，Shift+←→跳5帧</div>
+                                    <div class="tip">🖱️ 点击时间轴快速跳转</div>
+                                    <div class="tip">📝 使用帧号/时间输入框精确定位</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <h4 class="panel-title">帧控制</h4>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label>帧号</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="frame-number" value="${appState.currentFrame}" min="0" style="flex: 1;">
+                                <button class="btn-secondary btn-small" onclick="jumpToFrame()">跳转</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>时间(秒)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="frame-time" value="${(appState.currentFrame / appState.videoInfo.fps).toFixed(2)}" step="0.1" min="0" style="flex: 1;">
+                                <button class="btn-secondary btn-small" onclick="jumpToTime()">跳转</button>
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 16px;">
+                            <button class="btn-primary" id="btn-confirm-lap" onclick="confirmCurrentFrame()">
+                                ✅ 确认为本圈终点
+                            </button>
+                        </div>
+                        <div class="button-group" style="margin-top: 8px;">
+                            <button class="btn-secondary btn-small" onclick="cancelSelection()">
+                                ↩️ 重新选择
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function transitionToPhase(phase) {
+            // 暂停播放（如果正在播放）
+            if (appState.isPlaying) {
+                pausePlayback();
+            }
+            
+            // 更新阶段指示
+            for (let i = 1; i <= 3; i++) {
+                const phaseDiv = document.getElementById(`phase-${i}`);
+                phaseDiv.classList.remove('active', 'completed');
+                if (i < phase) {
+                    phaseDiv.classList.add('completed');
+                } else if (i === phase) {
+                    phaseDiv.classList.add('active');
+                }
+            }
+
+            // 更新内容显示
+            document.getElementById('phase1-content').classList.toggle('hidden', phase !== 1);
+            document.getElementById('phase2-content').classList.toggle('hidden', phase !== 2);
+            document.getElementById('phase3-content').classList.toggle('hidden', phase !== 3);
+            
+            // 更新控制面板
+            updateControlPanel(phase);
+            
+            // 显示/隐藏相关区域 - 候选帧现在在phase3-content内部管理
+        }
+
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            // 根据类型设置图标
+            let icon = '';
+            switch(type) {
+                case 'success':
+                    icon = '✅';
+                    break;
+                case 'error':
+                    icon = '❌';
+                    break;
+                case 'info':
+                default:
+                    icon = 'ℹ️';
+                    break;
+            }
+            
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                ${message}
+                <button class="toast-close" onclick="closeToast(this)">&times;</button>
+            `;
+            
+            // 添加到容器
+            container.appendChild(toast);
+            
+            // 触发显示动画
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // 自动关闭（错误消息持续更长时间）
+            const duration = type === 'error' ? 8000 : 4000;
+            setTimeout(() => {
+                closeToast(toast.querySelector('.toast-close'));
+            }, duration);
+        }
+
+        function closeToast(closeBtn) {
+            const toast = closeBtn.parentElement;
+            toast.classList.remove('show');
+            toast.style.animation = 'slideOutToast 0.3s ease forwards';
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.parentElement.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        function setButtonLoading(buttonId, loading) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) {
+                console.warn(`Button with id "${buttonId}" not found`);
+                return;
+            }
+            
+            btn.disabled = loading;
+            
+            if (loading) {
+                // 保存原始文本
+                if (!btn.dataset.originalText) {
+                    btn.dataset.originalText = btn.innerHTML;
+                }
+                btn.innerHTML = '<span class="loading"></span> 加载中...';
+            } else {
+                // 恢复原始文本
+                if (btn.dataset.originalText) {
+                    btn.innerHTML = btn.dataset.originalText;
+                }
+            }
+        }
+
+        // ============ 键盘控制 ============
+
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', (event) => {
+                // 如果用户正在输入框中输入，不处理快捷键
+                if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                // 阻止默认行为
+                const handled = handleKeyboardShortcut(event);
+                if (handled) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        function handleKeyboardShortcut(event) {
+            const { code, shiftKey, ctrlKey, altKey } = event;
+            
+            // 只在有视频加载时处理快捷键
+            if (!appState.videoInfo || !appState.counterId) {
+                return false;
+            }
+            
+            switch (code) {
+                case 'Space':
+                    // 空格键：播放/暂停
+                    togglePlayback();
+                    return true;
+                    
+                case 'ArrowLeft':
+                    // 左箭头：上一帧 (Shift+左箭头：向前跳5帧)
+                    if (shiftKey) {
+                        goToPreviousFrame(5);
+                    } else {
+                        goToPreviousFrame(1);
+                    }
+                    return true;
+                    
+                case 'ArrowRight':
+                    // 右箭头：下一帧 (Shift+右箭头：向后跳5帧)
+                    if (shiftKey) {
+                        goToNextFrame(5);
+                    } else {
+                        goToNextFrame(1);
+                    }
+                    return true;
+                    
+                case 'Home':
+                    // Home键：跳转到开始
+                    getFrame(0);
+                    return true;
+                    
+                case 'End':
+                    // End键：跳转到结束
+                    getFrame(appState.videoInfo.total_frames - 1);
+                    return true;
+                    
+                case 'KeyJ':
+                    // J键：向前跳10帧
+                    goToPreviousFrame(10);
+                    return true;
+                    
+                case 'KeyL':
+                    // L键：向后跳10帧  
+                    goToNextFrame(10);
+                    return true;
+                    
+                case 'KeyK':
+                    // K键：播放/暂停 (备用)
+                    togglePlayback();
+                    return true;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // ============ 初始化应用 ============
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // 初始化为阶段1
+            transitionToPhase(1);
+            
+            // 设置键盘控制
+            setupKeyboardControls();
+        });
+    </script>
+</body>
+</html>
