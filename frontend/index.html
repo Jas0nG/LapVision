@@ -377,7 +377,7 @@
         .file-upload-area {
             border: 2px dashed #444;
             border-radius: 8px;
-            padding: 24px;
+            padding: 18px;
             text-align: center;
             background: #1a1a1a;
             transition: all 0.3s ease;
@@ -1164,9 +1164,9 @@
         }
 
         .guide-box .guide-icon {
-            font-size: 2em;
+            font-size: 1.5em;
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
         }
 
@@ -1193,8 +1193,8 @@
         .guide-steps .step {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
-            padding: 8px 12px;
+            margin-bottom: 4px;
+            padding: 4px 6px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             transition: all 0.2s ease;
@@ -1440,14 +1440,14 @@
 
         .compact-candidates-gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 8px;
             padding: 12px;
             background: #1a1a1a;
             border: 1px solid #444;
             border-top: none;
             border-radius: 0 0 6px 6px;
-            max-height: 180px; /* 减小最大高度 */
+            max-height: 500px;
             overflow-y: auto;
         }
 
@@ -1471,15 +1471,15 @@
 
         .compact-candidates-gallery .gallery-item img {
             width: 100%;
-            height: 100px; /* 减小图片高度 */
+            height: 160px; /* 减小图片高度 */
             object-fit: cover;
         }
 
         .compact-candidates-gallery .gallery-item .label {
             padding: 4px 6px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.3);
             color: #e0e0e0;
-            font-size: 0.65em;
+            font-size: 0.7em;
             text-align: center;
             line-height: 1.2;
         }
@@ -1553,7 +1553,7 @@
         }
 
         .compact-laps-list {
-            max-height: 350px;
+            max-height: 600px;
             overflow-y: auto;
         }
 
@@ -1721,11 +1721,11 @@
                                     <!-- 当前帧 -->
                                     <div class="compact-preview-half">
                                         <div class="compact-preview-header">
-                                            <span class="preview-label">🎯 当前帧</span>
+                                            <span class="preview-label">🎯 冲线时刻</span>
                                             <span class="preview-time" id="current-video-timestamp">00:00:00</span>
                                         </div>
                                         <div class="compact-video-preview">
-                                            <img id="current-frame-display" src="" alt="当前帧" style="display: none;">
+                                            <img id="current-frame-display" src="" alt="冲线时刻" style="display: none;">
                                             <div class="compact-video-overlay" id="current-video-overlay">
                                                 <div class="compact-playback-controls">
                                                     <button class="compact-play-btn" id="current-play-pause-btn" onclick="togglePlayback()" title="播放/暂停 (空格)">
@@ -1740,8 +1740,8 @@
                                 <!-- 候选帧区域 - 移到预览下方 -->
                                 <div id="candidates-display" class="hidden">
                                     <div class="candidates-header">
-                                        <h4>🔍 候选终点帧</h4>
-                                        <span class="candidates-hint">点击选择最接近的终点</span>
+                                        <h4>请选择冲线时刻</h4>
+                                        <span class="candidates-hint">由系统自动识别</span>
                                     </div>
                                     <div class="compact-candidates-gallery" id="candidates-gallery"></div>
                                 </div>
@@ -1830,11 +1830,11 @@
                                         <div class="guide-steps">
                                             <div class="step">
                                                 <span class="step-number">1</span>
-                                                <span>加载过程中未经剪辑的车载视频</span>
+                                                <span>加载未经剪辑的车载视频</span>
                                             </div>
                                             <div class="step">
                                                 <span class="step-number">2</span>
-                                                <span>选择第一次经过终点/起点线的参考帧</span>
+                                                <span>选择第一次经过起点/终点线的参考帧</span>
                                             </div>
                                             <div class="step">
                                                 <span class="step-number">3</span>
@@ -1850,7 +1850,6 @@
                             </div>
                             <div class="panel-content">
                                 <div class="form-group">
-                                    <label>视频文件</label>
                                     
                                     <!-- 文件上传区域 -->
                                     <div class="file-upload-area" id="file-upload-area">
@@ -1882,7 +1881,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>最小圈速(秒)</label>
+                                    <label>预估最小圈速(秒)   (用于加速搜索)</label>
                                     <input type="number" id="min-lap-time" value="18" min="1" step="0.1">
                                 </div>
                                 <div class="button-group">
@@ -1904,11 +1903,10 @@
                         <div class="guide-box">
                             <div class="guide-content">
                                 <h5>设置计时起点</h5>
-                                <p>请将时间轴定位到您<strong>第一次经过起点/终点线</strong>的画面作为参考帧。这将作为后续圈速计算的基准点。</p>
+                                <p>请将画面定位到您<strong>第一次经过起点/终点线</strong>的画面作为参考。该位置将作为后续圈速计算的基准点。</p>
                                 <div class="guide-tips">
                                     <div class="tip">💡 使用播放控制或拖动时间轴定位到合适位置</div>
-                                    <div class="tip">🎮 支持键盘快捷键：空格播放/暂停，←→逐帧浏览</div>
-                                    <div class="tip">⚡ Shift+←/→可快速跳转5帧</div>
+                                    <div class="tip">🎮 支持键盘快捷键：空格播放/暂停，←→逐帧浏览, Shift+←/→可跳转5帧</div>
                                 </div>
                             </div>
                         </div>
@@ -1934,7 +1932,7 @@
                                 </div>
                                 <div class="button-group" style="margin-top: 16px;">
                                     <button class="btn-primary" id="btn-set-ref" onclick="setReferenceFrame()">
-                                        设为参考帧
+                                        设为起点/终点
                                     </button>
                                 </div>
                             </div>
@@ -1946,12 +1944,12 @@
                         <div class="guide-box">
                             <div class="guide-content">
                                 <h5>开始圈速计算</h5>
-                                <p>系统将使用AI视觉识别技术，自动查找与参考帧相似的画面，精确计算每一圈的用时。</p>
+                                <p>系统将使用AI视觉识别技术，自动查找冲线时刻，用于计算每一圈的用时。</p>
                                 <div class="guide-tips">
                                     <div class="tip">🎯 点击"搜索下一圈"开始自动分析</div>
                                     <div class="tip">🖱️ 从候选结果中选择最接近的终点帧</div>
                                     <div class="tip">🎮 使用时间轴和键盘快捷键进行精确调整</div>
-                                    <div class="tip">✅ 确认后继续搜索更多圈速</div>
+                                    <div class="tip">✅ 确认后将会自动开始下一圈的分析</div>
                                 </div>
                             </div>
                         </div>
@@ -1964,11 +1962,6 @@
                                 <div class="button-group">
                                     <button class="btn-primary" id="btn-search" onclick="searchLap()">
                                         🔍 开始分析
-                                    </button>
-                                </div>
-                                <div class="button-group" style="margin-top: 12px;">
-                                    <button class="btn-secondary" id="btn-save" onclick="saveResults()">
-                                        💾 保存结果
                                     </button>
                                 </div>
                             </div>
@@ -2505,36 +2498,40 @@
                     
                     // 更新指南提示并自动开始下一圈搜索
                     const lapNumber = result.data.statistics.total_laps;
-                    updateDynamicGuide('自动搜索中...', `第${lapNumber}圈已确认（${result.data.formatted_lap_time}）。正在自动搜索第${lapNumber + 1}圈...`);
+                    updateDynamicGuide('自动识别冲线时刻中...', `第${lapNumber}圈已确认（${result.data.formatted_lap_time}）。正在自动搜索第${lapNumber + 1}圈...`);
                     
-                    // 延迟一下让用户看到确认消息，然后自动搜索下一圈
-                    setTimeout(async () => {
-                        try {
-                            // 尝试搜索下一圈
-                            const searchResponse = await fetch(`/api/search-lap/${appState.counterId}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ search_range: 10 })
-                            });
-                            
-                            const searchResult = await searchResponse.json();
-                            
-                            if (searchResult.status === 'success') {
-                                displayCandidates(searchResult.data.candidates);
-                                updateDynamicGuide('候选帧已生成', `第${lapNumber + 1}圈候选帧已生成，请选择最接近的终点帧。`);
+                    // 立即开始下一圈搜索
+                    try {
+                        // 在自动搜索期间禁用按钮
+                        setButtonLoading('btn-search', true, '正在查找您的冲线画面...');
+                        
+                        // 尝试搜索下一圈
+                        const searchResponse = await fetch(`/api/search-lap/${appState.counterId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ search_range: 10 })
+                        });
+                        
+                        const searchResult = await searchResponse.json();
+                        
+                        if (searchResult.status === 'success') {
+                            displayCandidates(searchResult.data.candidates);
+                            updateDynamicGuide('候选帧已生成', `第${lapNumber + 1}圈候选帧已生成，请选择最接近的终点帧。`);
+                        } else {
+                            // 检查是否是视频结束
+                            if (searchResult.message && (searchResult.message.includes('视频末尾') || searchResult.message.includes('视频已结束') || searchResult.message.includes('剩余时长不足'))) {
+                                updateDynamicGuide('🏁 分析完成', `视频分析完毕！共完成${lapNumber}圈分析。可以保存结果或重新开始分析。`);
+                                showMessage('🏁 视频分析完成！', 'info');
                             } else {
-                                // 检查是否是视频结束
-                                if (searchResult.message && (searchResult.message.includes('视频末尾') || searchResult.message.includes('视频已结束') || searchResult.message.includes('剩余时长不足'))) {
-                                    updateDynamicGuide('🏁 分析完成', `视频分析完毕！共完成${lapNumber}圈分析。可以保存结果或重新开始分析。`);
-                                    showMessage('🏁 视频分析完成！', 'info');
-                                } else {
-                                    updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
-                                }
+                                updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
                             }
-                        } catch (error) {
-                            updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
                         }
-                    }, 1000);
+                    } catch (error) {
+                        updateDynamicGuide('搜索完成', `已完成${lapNumber}圈分析。可以手动搜索更多圈速或保存当前结果。`);
+                    } finally {
+                        // 恢复按钮状态
+                        setButtonLoading('btn-search', false);
+                    }
                 } else {
                     showMessage(`确认失败: ${result.message}`, 'error');
                 }
@@ -2667,21 +2664,14 @@
                                panel.classList.contains('phase-2-guide') ? 2 : 3;
             
             panel.innerHTML = `
-                <div class="panel">
-                    <div class="panel-header">
-                        <h4 class="panel-title">🎯 确认终点帧</h4>
-                    </div>
-                    <div class="panel-content">
-                        <div class="guide-box">
-                            <div class="guide-content">
-                                <h5>已选择候选帧</h5>
-                                <p>当前预览已跳转至候选帧位置。请使用以下方式进行精确调整，然后确认为本圈终点。</p>
-                                <div class="guide-tips">
-                                    <div class="tip">🎮 键盘控制：←→逐帧，Shift+←→跳5帧</div>
-                                    <div class="tip">🖱️ 点击时间轴快速跳转</div>
-                                    <div class="tip">📝 使用帧号/时间输入框精确定位</div>
-                                </div>
-                            </div>
+                <div class="guide-box">
+                    <div class="guide-content">
+                        <h5>已选择候选帧</h5>
+                        <p>当前预览已跳转至候选帧位置。请使用以下方式进行精确调整，然后确认为本圈终点。</p>
+                        <div class="guide-tips">
+                            <div class="tip">🎮 键盘控制：←→逐帧，Shift+←→跳5帧</div>
+                            <div class="tip">🖱️ 点击时间轴快速跳转</div>
+                            <div class="tip">📝 使用帧号/时间输入框精确定位</div>
                         </div>
                     </div>
                 </div>
@@ -2707,12 +2697,7 @@
                         </div>
                         <div class="button-group" style="margin-top: 16px;">
                             <button class="btn-primary" id="btn-confirm-lap" onclick="confirmCurrentFrame()">
-                                ✅ 确认为本圈终点
-                            </button>
-                        </div>
-                        <div class="button-group" style="margin-top: 8px;">
-                            <button class="btn-secondary btn-small" onclick="cancelSelection()">
-                                ↩️ 重新选择
+                                确认为冲线时刻
                             </button>
                         </div>
                     </div>
@@ -2804,7 +2789,7 @@
             }, 300);
         }
 
-        function setButtonLoading(buttonId, loading) {
+        function setButtonLoading(buttonId, loading, customText = null) {
             const btn = document.getElementById(buttonId);
             if (!btn) {
                 console.warn(`Button with id "${buttonId}" not found`);
@@ -2818,7 +2803,8 @@
                 if (!btn.dataset.originalText) {
                     btn.dataset.originalText = btn.innerHTML;
                 }
-                btn.innerHTML = '<span class="loading"></span> 加载中...';
+                const loadingText = customText || '加载中...';
+                btn.innerHTML = `<span class="loading"></span> ${loadingText}`;
             } else {
                 // 恢复原始文本
                 if (btn.dataset.originalText) {

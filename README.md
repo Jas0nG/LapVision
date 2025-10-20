@@ -2,7 +2,9 @@
 
 A modern web application based on Flask and Vue.js that automatically analyzes lap times from onboard driver videos. Utilizing Visual Place Recognition (VPR) , it delivers accurate and robust lap time results, significantly improving the efficiency of post-race data analysis.
 
-## 📋 项目结构
+![主界面截图](assets/screenshot0.png)
+
+## 项目结构
 
 ```
 lapCounter_web/
@@ -20,7 +22,7 @@ lapCounter_web/
 └── .gitignore                 # Git 忽略文件
 ```
 
-## 🚀 快速开始
+## 快速开始
 
 ### 1. 启动应用
 
