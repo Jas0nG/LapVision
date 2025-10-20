@@ -26,7 +26,7 @@ except ImportError as e:
     TORCH_AVAILABLE = False
 
 
-class LapCounter:
+class LapVision:
     """卡丁车圈速计算器核心类"""
     
     def __init__(self, video_path, min_lap_time, backbone_name="resnet50", output_dim=16384):
@@ -353,5 +353,5 @@ class LapCounter:
 
 if __name__ == "__main__":
     # 示例使用
-    counter = LapCounter("/home/wtc/Project/lapCounter/example/v001.mp4", min_lap_time=18)
+    counter = LapVision("/home/wtc/Project/lapCounter/example/v001.mp4", min_lap_time=18)
     print(counter.get_video_info())

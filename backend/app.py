@@ -14,12 +14,12 @@ import json
 
 # 添加后端模块路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lap_counter_core import LapCounter
+from lap_counter_core import LapVision
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
-# 存储活跃的 LapCounter 实例
+# 存储活跃的 LapVision 实例
 active_counters = {}
 counter_id_counter = 0
 
@@ -72,7 +72,7 @@ def init_counter():
         counter_id_counter += 1
         counter_id = f"counter_{counter_id_counter}"
         
-        counter = LapCounter(video_path, min_lap_time)
+        counter = LapVision(video_path, min_lap_time)
         counter.load_model()
         
         active_counters[counter_id] = counter
@@ -82,11 +82,11 @@ def init_counter():
         return APIResponse.success({
             "counter_id": counter_id,
             "video_info": video_info
-        }, "计算器初始化成功")
+        }, "LapVision Service Initialized Successfully")
     
     except Exception as e:
         traceback.print_exc()
-        return APIResponse.error(e, "初始化失败", 500)
+        return APIResponse.error(e, "LapVision Service Initialization Failed", 500)
 
 
 @app.route('/api/videos', methods=['GET'])
@@ -103,10 +103,10 @@ def list_videos():
         
         return APIResponse.success({
             "videos": videos
-        }, "获取视频列表成功")
+        }, "Video list retrieved successfully")
     
     except Exception as e:
-        return APIResponse.error(e, "获取视频列表失败", 500)
+        return APIResponse.error(e, "Failed to retrieve video list", 500)
 
 
 # ============ 帧管理 API ============
@@ -126,7 +126,7 @@ def get_frame(counter_id, frame_idx):
         counter = active_counters.get(counter_id)
         if not counter:
             frame_request_count -= 1
-            return APIResponse.error("计算器不存在", "Invalid counter_id", 404)
+            return APIResponse.error("LapVision 实例不存在", "Invalid counter_id", 404)
         
         frame = counter.get_frame(frame_idx)
         if frame is None:
@@ -158,7 +158,7 @@ def get_frame_info(counter_id):
     try:
         counter = active_counters.get(counter_id)
         if not counter:
-            return APIResponse.error("计算器不存在", "Invalid counter_id", 404)
+            return APIResponse.error("LapVision 实例不存在", "Invalid counter_id", 404)
         
         return APIResponse.success({
             "total_frames": counter.total_frames,
@@ -178,7 +178,7 @@ def set_ref_frame(counter_id, frame_idx):
     try:
         counter = active_counters.get(counter_id)
         if not counter:
-            return APIResponse.error("计算器不存在", "Invalid counter_id", 404)
+            return APIResponse.error("LapVision 实例不存在", "Invalid counter_id", 404)
         
         frame = counter.set_reference_frame(frame_idx)
         img_base64 = counter.frame_to_base64(frame)
@@ -278,44 +278,6 @@ def search_lap(counter_id):
     except Exception as e:
         traceback.print_exc()
         return APIResponse.error(e, "搜索失败", 500)
-
-
-@app.route('/api/refine-search/<counter_id>/<int:center_frame_idx>', methods=['POST'])
-def refine_search(counter_id, center_frame_idx):
-    """微调搜索（±5帧）"""
-    try:
-        counter = active_counters.get(counter_id)
-        if not counter:
-            return APIResponse.error("计算器不存在", "Invalid counter_id", 404)
-        
-        # 获取±5帧的预览
-        frames_range = []
-        for offset in range(-5, 6):
-            frame_idx = center_frame_idx + offset
-            if 0 <= frame_idx < counter.total_frames:
-                frames_range.append(frame_idx)
-        
-        preview_images = []
-        for frame_idx in frames_range:
-            frame = counter.get_frame(frame_idx)
-            if frame is not None:
-                img_base64 = counter.frame_to_base64(frame)
-                time_sec = frame_idx / counter.fps
-                preview_images.append({
-                    "frame_idx": frame_idx,
-                    "time_sec": time_sec,
-                    "formatted_time": counter.format_time(time_sec),
-                    "is_center": frame_idx == center_frame_idx,
-                    "image_base64": img_base64
-                })
-        
-        return APIResponse.success({
-            "previews": preview_images
-        }, "微调搜索成功")
-    
-    except Exception as e:
-        traceback.print_exc()
-        return APIResponse.error(e, "微调搜索失败", 500)
 
 
 # ============ 圈速确认 API ============
@@ -441,7 +403,7 @@ def internal_error(e):
 
 
 if __name__ == '__main__':
-    print("🚀 启动卡丁车圈速计算器 Web 服务")
-    print("📡 API 服务: http://localhost:5000")
-    print("🌐 前端服务: http://localhost:5000")
+    print("LapVision Server Started")
+    print("API Service: http://localhost:5000")
+    print("Frontend Service: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
