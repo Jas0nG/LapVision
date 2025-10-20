@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-卡丁车圈速计算器 - Flask 后端 API
+LapVision - Flask 后端 API
 """
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -11,6 +11,8 @@ from pathlib import Path
 import traceback
 from datetime import datetime
 import json
+from werkzeug.utils import secure_filename
+import uuid
 
 # 添加后端模块路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +33,14 @@ max_concurrent_frame_requests = 3
 VIDEOS_DIR = Path("/home/wtc/Project/lapCounter/example")
 OUTPUT_DIR = Path("/home/wtc/Project/lapCounter_web/results")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# 上传目录配置
+UPLOAD_DIR = Path("/home/wtc/Project/lapCounter_web/uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# 允许的视频文件扩展名
+ALLOWED_VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mov'}
+MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
 
 
 class APIResponse:
@@ -89,17 +99,91 @@ def init_counter():
         return APIResponse.error(e, "LapVision Service Initialization Failed", 500)
 
 
+# ============ 文件上传功能 ============
+
+def allowed_video_file(filename):
+    """检查文件扩展名是否允许"""
+    return Path(filename).suffix.lower() in ALLOWED_VIDEO_EXTENSIONS
+
+def generate_unique_filename(original_filename):
+    """生成唯一的文件名"""
+    file_ext = Path(original_filename).suffix
+    unique_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    secure_name = secure_filename(Path(original_filename).stem)
+    return f"{secure_name}_{timestamp}_{unique_id}{file_ext}"
+
+@app.route('/api/upload', methods=['POST'])
+def upload_video():
+    """上传视频文件"""
+    try:
+        # 检查是否有文件
+        if 'video' not in request.files:
+            return APIResponse.error("No video file provided", "Missing video file", 400)
+        
+        file = request.files['video']
+        
+        # 检查文件名
+        if file.filename == '':
+            return APIResponse.error("No file selected", "Empty filename", 400)
+        
+        # 检查文件类型
+        if not allowed_video_file(file.filename):
+            return APIResponse.error(
+                f"File type not allowed. Supported formats: {', '.join(ALLOWED_VIDEO_EXTENSIONS)}", 
+                "Invalid file type", 400
+            )
+        
+        # 生成唯一文件名
+        filename = generate_unique_filename(file.filename)
+        file_path = UPLOAD_DIR / filename
+        
+        # 保存文件
+        file.save(str(file_path))
+        
+        # 检查文件大小
+        if file_path.stat().st_size > MAX_FILE_SIZE:
+            file_path.unlink()  # 删除文件
+            return APIResponse.error(
+                f"File size exceeds maximum limit of {MAX_FILE_SIZE // (1024*1024)}MB", 
+                "File too large", 400
+            )
+        
+        return APIResponse.success({
+            "file_path": str(file_path),
+            "file_name": filename,
+            "original_name": file.filename,
+            "file_size": file_path.stat().st_size
+        }, "Video uploaded successfully")
+    
+    except Exception as e:
+        return APIResponse.error(e, "Failed to upload video", 500)
+
+
 @app.route('/api/videos', methods=['GET'])
 def list_videos():
     """列出可用的视频文件"""
     try:
         videos = []
+        
+        # 添加预设视频文件
         for video_file in VIDEOS_DIR.glob("*.mp4"):
             videos.append({
                 "name": video_file.name,
                 "path": str(video_file),
-                "size": video_file.stat().st_size
+                "size": video_file.stat().st_size,
+                "type": "preset"
             })
+        
+        # 添加上传的视频文件
+        for video_file in UPLOAD_DIR.glob("*"):
+            if video_file.suffix.lower() in ALLOWED_VIDEO_EXTENSIONS:
+                videos.append({
+                    "name": video_file.name,
+                    "path": str(video_file),
+                    "size": video_file.stat().st_size,
+                    "type": "uploaded"
+                })
         
         return APIResponse.success({
             "videos": videos

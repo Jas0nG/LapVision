@@ -373,6 +373,110 @@
             justify-content: center;
         }
 
+        /* 文件上传区域 */
+        .file-upload-area {
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-upload-area:hover {
+            border-color: #666;
+            background: #1f1f1f;
+        }
+
+        .file-upload-area.drag-over {
+            border-color: #ff6b35;
+            background: rgba(255, 107, 53, 0.1);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upload-icon {
+            font-size: 2.5em;
+            opacity: 0.6;
+        }
+
+        .upload-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .upload-main {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #e5e5e5;
+        }
+
+        .upload-sub {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .upload-link {
+            color: #ff6b35;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .upload-link:hover {
+            color: #ff8c5a;
+        }
+
+        .upload-info {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .upload-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            border-radius: 8px;
+        }
+
+        .progress-bar {
+            width: 80%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #ff8c5a);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
         /* 专业视频预览 */
         .video-preview {
             position: relative;
@@ -1747,9 +1851,35 @@
                             <div class="panel-content">
                                 <div class="form-group">
                                     <label>视频文件</label>
-                                    <select id="video-select">
-                                        <option value="">选择视频...</option>
-                                    </select>
+                                    
+                                    <!-- 文件上传区域 -->
+                                    <div class="file-upload-area" id="file-upload-area">
+                                        <div class="upload-content">
+                                            <div class="upload-icon">📁</div>
+                                            <div class="upload-text">
+                                                <div class="upload-main">拖拽视频文件到此处</div>
+                                                <div class="upload-sub">或者 <span class="upload-link" id="browse-files">浏览文件</span></div>
+                                            </div>
+                                            <div class="upload-info">支持 MP4, AVI, MOV 格式，最大 500MB</div>
+                                        </div>
+                                        <div class="upload-progress" id="upload-progress" style="display: none;">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" id="progress-fill"></div>
+                                            </div>
+                                            <div class="progress-text" id="progress-text">上传中...</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 隐藏的文件输入 -->
+                                    <input type="file" id="file-input" accept=".mp4,.avi,.mov" style="display: none;">
+                                    
+                                    <!-- 视频选择下拉框 -->
+                                    <div class="form-group" style="margin-top: 16px;">
+                                        <label>或选择已有视频</label>
+                                        <select id="video-select">
+                                            <option value="">选择视频...</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>最小圈速(秒)</label>
@@ -2001,15 +2131,51 @@
                 // 清空现有选项
                 select.innerHTML = '<option value="">选择视频...</option>';
                 
-                result.data.videos.forEach(video => {
-                    const option = document.createElement('option');
-                    option.value = video.path;
-                    option.textContent = video.name;
-                    select.appendChild(option);
-                });
+                // 分组显示视频
+                const uploadedVideos = result.data.videos.filter(v => v.type === 'uploaded');
+                const presetVideos = result.data.videos.filter(v => v.type === 'preset');
+                
+                // 添加上传的视频
+                if (uploadedVideos.length > 0) {
+                    const uploadedGroup = document.createElement('optgroup');
+                    uploadedGroup.label = '📁 已上传的视频';
+                    
+                    uploadedVideos.forEach(video => {
+                        const option = document.createElement('option');
+                        option.value = video.path;
+                        option.textContent = `${video.name} (${formatFileSize(video.size)})`;
+                        uploadedGroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(uploadedGroup);
+                }
+                
+                // 添加预设视频
+                if (presetVideos.length > 0) {
+                    const presetGroup = document.createElement('optgroup');
+                    presetGroup.label = '🎬 示例视频';
+                    
+                    presetVideos.forEach(video => {
+                        const option = document.createElement('option');
+                        option.value = video.path;
+                        option.textContent = `${video.name} (${formatFileSize(video.size)})`;
+                        presetGroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(presetGroup);
+                }
+                
             } catch (error) {
                 showMessage(`加载视频列表失败: ${error}`, 'error');
             }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
         async function initCounter() {
@@ -2740,6 +2906,160 @@
             }
         }
 
+        // ============ 文件上传功能 ============
+
+        function initFileUpload() {
+            const uploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('file-input');
+            const browseLink = document.getElementById('browse-files');
+
+            if (!uploadArea || !fileInput || !browseLink) {
+                console.warn('File upload elements not found');
+                return;
+            }
+
+            // 点击浏览文件
+            browseLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                fileInput.click();
+            });
+
+            // 点击上传区域也触发文件选择
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // 文件选择
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileUpload(file);
+                }
+            });
+
+            // 拖拽事件
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('drag-over');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+        }
+
+        function validateVideoFile(file) {
+            const allowedTypes = ['video/mp4', 'video/avi', 'video/quicktime'];
+            const maxSize = 500 * 1024 * 1024; // 500MB
+
+            if (!allowedTypes.includes(file.type)) {
+                showMessage('只支持 MP4, AVI, MOV 格式的视频文件', 'error');
+                return false;
+            }
+
+            if (file.size > maxSize) {
+                showMessage('文件大小不能超过 500MB', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        function handleFileUpload(file) {
+            if (!validateVideoFile(file)) {
+                return;
+            }
+
+            showUploadProgress(true);
+            updateUploadProgress(0, '准备上传...');
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            const xhr = new XMLHttpRequest();
+
+            // 上传进度
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    updateUploadProgress(percentComplete, `上传中 ${Math.round(percentComplete)}%`);
+                }
+            });
+
+            // 上传完成
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.status === 'success') {
+                            updateUploadProgress(100, '上传完成');
+                            showMessage('视频上传成功！', 'success');
+                            
+                            // 刷新视频列表并自动选择新上传的视频
+                            setTimeout(async () => {
+                                await loadVideos();
+                                const videoSelect = document.getElementById('video-select');
+                                if (videoSelect && result.data.file_path) {
+                                    videoSelect.value = result.data.file_path;
+                                }
+                                showUploadProgress(false);
+                            }, 1000);
+                        } else {
+                            showMessage(`上传失败: ${result.message}`, 'error');
+                            showUploadProgress(false);
+                        }
+                    } catch (error) {
+                        showMessage('上传响应解析失败', 'error');
+                        showUploadProgress(false);
+                    }
+                } else {
+                    showMessage('上传失败，请重试', 'error');
+                    showUploadProgress(false);
+                }
+            });
+
+            // 上传错误
+            xhr.addEventListener('error', () => {
+                showMessage('上传出错，请检查网络连接', 'error');
+                showUploadProgress(false);
+            });
+
+            // 开始上传
+            xhr.open('POST', '/api/upload');
+            xhr.send(formData);
+        }
+
+        function showUploadProgress(show) {
+            const progressDiv = document.getElementById('upload-progress');
+            if (progressDiv) {
+                progressDiv.style.display = show ? 'flex' : 'none';
+            }
+        }
+
+        function updateUploadProgress(percent, text) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            if (progressFill) {
+                progressFill.style.width = `${percent}%`;
+            }
+            
+            if (progressText) {
+                progressText.textContent = text;
+            }
+        }
+
         // ============ 初始化应用 ============
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -2748,6 +3068,9 @@
             
             // 设置键盘控制
             setupKeyboardControls();
+            
+            // 初始化文件上传
+            initFileUpload();
         });
     </script>
 </body>
