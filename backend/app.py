@@ -29,13 +29,19 @@ counter_id_counter = 0
 frame_request_count = 0
 max_concurrent_frame_requests = 3
 
+# 获取基础路径
+BASE_DIR = Path(__file__).parent.parent
+
 # 获取视频目录
-VIDEOS_DIR = Path("/home/wtc/Project/lapCounter/example")
-OUTPUT_DIR = Path("/home/wtc/Project/lapCounter_web/results")
+VIDEOS_DIR = BASE_DIR / "example_videos"  # 为部署创建示例视频目录
+OUTPUT_DIR = BASE_DIR / "results"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# 上传目录配置
-UPLOAD_DIR = Path("/home/wtc/Project/lapCounter_web/uploads")
+# 上传目录配置 - 在生产环境中使用持久化磁盘
+if os.environ.get('RENDER'):
+    UPLOAD_DIR = Path("/opt/render/project/src/uploads")
+else:
+    UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # 允许的视频文件扩展名
@@ -487,7 +493,11 @@ def internal_error(e):
 
 
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    
     print("LapVision Server Started")
-    print("API Service: http://localhost:5000")
-    print("Frontend Service: http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print(f"API Service: http://0.0.0.0:{port}")
+    print(f"Frontend Service: http://0.0.0.0:{port}")
+    app.run(debug=debug, host='0.0.0.0', port=port)
