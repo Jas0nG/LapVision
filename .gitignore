@@ -48,7 +48,6 @@ instance/
 
 # Results
 results/
-*.json
 output/
 
 # Node (if using npm)
